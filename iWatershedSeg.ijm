@@ -119,20 +119,26 @@ macro "Register_object Action Tool - C059 T8c14R"
 macro "Previous_frame Action Tool - C059 T8c14<"
 {
 	setBatchMode(true);
-	currentFrame--;
-	setCurrentFrame(image);
-	setCurrentFrame(labels);
-	updateOverlay();
+	if (currentFrame >= 1)
+	{
+		currentFrame--;
+		setCurrentFrame(image);
+		setCurrentFrame(labels);
+		updateOverlay();
+	}
 	setBatchMode("exit and display");
 }
 
 macro "Next_frame Action Tool - C059 T8c14>"
 {
 	setBatchMode(true);
-	currentFrame++;
-	setCurrentFrame(image);
-	setCurrentFrame(labels);
-	updateOverlay();
+	if (currentFrame <= nFrames)
+	{
+		currentFrame++;
+		setCurrentFrame(image);
+		setCurrentFrame(labels);
+		updateOverlay();
+	}
 	setBatchMode("exit and display");
 }
 
