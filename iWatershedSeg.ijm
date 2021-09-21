@@ -11,7 +11,6 @@ var bgLabel = 255;
 
 // Parameters
 var brushWidth = 10;
-var brushType = objLabel;
 var opacity = 40;
 var adjustBC = true;
 var lut = "iWatershedSeg-black-red-green";
@@ -23,6 +22,8 @@ var contourMap = 0;
 var labels = 0;
 var objectCount = 0;
 var currentFrame = 1;
+var nFrames = 1;
+var brushType = objLabel;
 
 
 //macro "Unused Tool-1 - " {}
@@ -35,7 +36,7 @@ macro "Setup_project Action Tool - C059 T8c14S"
 	Dialog.show();
 	opt = Dialog.getChoice();
 
-	if (opt == proj[0])
+	if (opt == proj[0]) // newProjectDialog()
 	{
 		setUpGlobalVar();
 		imgs = getImageList();
@@ -48,7 +49,8 @@ macro "Setup_project Action Tool - C059 T8c14S"
 		img1 = Dialog.getChoice();
 		selectWindow(img1);
 		image = getImageID();
-		Stack.getDimensions(width, height, channels, slices, frames);
+		Stack.getDimensions(width, height, channels, slices, nFrames);
+		print(width, height, channels, slices, nFrames);
 		Stack.getPosition(channel, slice, currentFrame);
 		// check if channels == 1 sinon erreur
 		
@@ -60,30 +62,21 @@ macro "Setup_project Action Tool - C059 T8c14S"
 		// First slice: markers for watershed
 		// Second slice: watershed segmentation
 		// Third slice: registered objects
-		newImage("labels", "8-bit grayscale-mode", width, height, 3, slices, frames);
+		newImage("labels", "8-bit grayscale-mode", width, height, 3, slices, nFrames);
 		labels = getImageID();
 		run(lut);
 		updateOverlay();
 	}
-	else 
+	else // loadProjectDialog 
 	{
 		exit("not yet supported");
 	}
 }
 
-
-
 macro "Brush_Object Tool - Ce00 La077 Ld098 L6859 L4a2f L2f4f L3f99 L5e9b L9b98 L6888 L5e8d L888c"
 {
 	brushType = objLabel;
 	draw();
-}
-
-function setBrushWidth()
-{
-	Dialog.create("Brush width");
-	Dialog.addSlider("Brush width:", 1, 100, brushWidth);
-	Dialog.show();
 }
 
 macro "Brush_Object Tool Options"
@@ -115,73 +108,12 @@ macro "Eraser Tool Options"
 
 macro "Segment Action Tool - C059 T8c14S"
 {
-	// Vérifier qu'il ya bien les deux étiquettes présentes
-	
-	// stocker le current frame pour éviter les erreurs
-	setBatchMode(true);
-
-	// Create markers
-	selectImage(labels);
-	run("Select None");
-	run("Duplicate...", "duplicate channels=1 frames=&currentFrame");
-	tmp1 = getTitle();
-	run("Duplicate...", "duplicate channels=3 frames=&currentFrame");
-	tmp2 = getTitle();
-	imageCalculator("Max create stack", tmp1, tmp2);
-	markers = getTitle();
-	changeValues(1, nMax, bgLabel);
-	close(tmp1);
-	close(tmp2);
-
-	// Watershed segmentation
-	selectImage(contourMap);
-	run("Duplicate...", "duplicate frames=&currentFrame");
-	cmap = getTitle();
-	if (invertContourMap) run("Invert", "stack");
-	run("Marker-controlled Watershed", "input=&cmap marker=&markers mask=None calculate use");
-	seg = getTitle();
-	selectImage(labels);
-	Stack.setChannel(2);
-	imageCalculator("Copy", labels, seg); // Ne gère pas la 3D
-
-	close(markers);
-	close(cmap);
-	close(seg);
-
-	setBatchMode("exit and display");
-}
-
-function resetCurrentLabel()
-{
-	selectImage(labels);
-	for (i = 1; i < 3; i++)
-	{
-		Stack.setChannel(i);
-		run("Select None");
-		run("Set...", "value=0 slice");
-	}
+	segment();
 }
 
 macro "Register_object Action Tool - C059 T8c14R"
 {
-	// Vérifier qu'il ya bien les deux étiquettes présentes
-	if (objectCount <= nMax)
-	{
-		setBatchMode(true);
-		objectCount++;
-		selectImage(labels);
-		Stack.setChannel(2);
-		pixelSelection(objLabel);
-		Stack.setChannel(3);
-		run("Set...", "value=&objectCount slice"); // 3D pas gérée
-		resetCurrentLabel();
-		Stack.setChannel(3);
-		setBatchMode("exit and display");
-	}
-	else 
-	{
-		exit("Maximum number of objects is reached.");
-	}
+	registerCurrentObject();
 }
 
 macro "Previous_frame Action Tool - C059 T8c14<"
@@ -214,6 +146,17 @@ macro "More Action Tool - C059 T8c14M"
 	Dialog.show();
 }
 
+function resetCurrentLabel()
+{
+	selectImage(labels);
+	for (i = 1; i < 3; i++)
+	{
+		Stack.setChannel(i);
+		run("Select None");
+		run("Set...", "value=0 slice");
+	}
+}
+
 function setUpGlobalVar()
 {
 	image = 0;
@@ -221,6 +164,23 @@ function setUpGlobalVar()
 	labels = 0;
 	objectCount = 0;
 	currentFrame = 1;
+	nFrames = 1;
+	brushType = objLabel;
+}
+
+// setParameters
+/*
+var brushWidth = 10;
+var opacity = 40;
+var adjustBC = true;
+var lut = "iWatershedSeg-black-red-green";
+var invertContourMap = false;
+*/
+function setBrushWidth()
+{
+	Dialog.create("Brush width");
+	Dialog.addSlider("Brush width:", 1, 100, brushWidth);
+	Dialog.show();
 }
 
 function updateOverlay()
@@ -249,7 +209,7 @@ function getTitleByID(id)
 function setCurrentFrame(img)
 {
 	selectImage(img);
-	Stack.setFrame(currentFrame);
+	if (nFrames > 1) Stack.setFrame(currentFrame);
 }
 
 function getImageList()
@@ -298,8 +258,68 @@ function draw()
     }
 }
 
+function segment()
+{
+	// Vérifier qu'il ya bien les deux étiquettes présentes
+	
+	// stocker le current frame pour éviter les erreurs
+	setBatchMode(true);
+
+	// Create markers
+	selectImage(labels);
+	run("Select None");
+	run("Duplicate...", "duplicate channels=1 frames=&currentFrame");
+	tmp1 = getTitle();
+	run("Duplicate...", "duplicate channels=3 frames=&currentFrame");
+	tmp2 = getTitle();
+	imageCalculator("Max create stack", tmp1, tmp2);
+	markers = getTitle();
+	changeValues(1, nMax, bgLabel);
+	close(tmp1);
+	close(tmp2);
+
+	// Watershed segmentation
+	selectImage(contourMap);
+	run("Duplicate...", "duplicate frames=&currentFrame");
+	cmap = getTitle();
+	if (invertContourMap) run("Invert", "stack");
+	run("Marker-controlled Watershed", "input=&cmap marker=&markers mask=None calculate use");
+	seg = getTitle();
+	selectImage(labels);
+	Stack.setChannel(2);
+	imageCalculator("Copy", labels, seg); // Ne gère pas la 3D
+
+	close(markers);
+	close(cmap);
+	close(seg);
+
+	setBatchMode("exit and display");
+}
+
 function pixelSelection(value)
 {
 	setThreshold(value, value);
 	run("Create Selection");
+}
+
+function registerCurrentObject()
+{
+	// Vérifier qu'il ya bien les deux étiquettes présentes
+	if (objectCount <= nMax)
+	{
+		setBatchMode(true);
+		objectCount++;
+		selectImage(labels);
+		Stack.setChannel(2);
+		pixelSelection(objLabel);
+		Stack.setChannel(3);
+		run("Set...", "value=&objectCount slice"); // 3D pas gérée
+		resetCurrentLabel();
+		Stack.setChannel(3);
+		setBatchMode("exit and display");
+	}
+	else 
+	{
+		exit("Maximum number of objects is reached.");
+	}
 }
