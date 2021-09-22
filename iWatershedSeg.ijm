@@ -51,7 +51,7 @@ macro "Setup_project Action Tool - icon:iWatershedSeg/new.png"
 		selectWindow(img1);
 		image = getImageID();
 		Stack.getDimensions(width, height, channels, slices, nFrames);
-		print(width, height, channels, slices, nFrames);
+		//print(width, height, channels, slices, nFrames);
 		Stack.getPosition(channel, slice, currentFrame);
 		// check if channels == 1 sinon erreur
 		
@@ -135,6 +135,8 @@ macro "More Action Tool - icon:iWatershedSeg/more.png"
 	//Dialog.addRadioButtonGroup("", more, more.length, 1, more[0]);
 	Dialog.addChoice("", more, more[0]);
 	Dialog.show();
+
+	//parametersDialog();
 }
 
 function resetCurrentLabel()
