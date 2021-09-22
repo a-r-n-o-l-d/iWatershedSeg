@@ -25,11 +25,12 @@ var currentFrame = 1;
 var nFrames = 1;
 var brushType = objLabel;
 
-
 //macro "Unused Tool-1 - " {}
 
-macro "Setup_project Action Tool - C059 T8c14S"
+macro "Setup_project Action Tool - icon:iWatershedSeg/new.png"
 {
+//	requires("1.53g");
+	
 	proj = newArray("start a new project", "load a project");
 	Dialog.create("Interactive Watershed Segmentation");
 	Dialog.addChoice("Project:", proj, proj[0]);
@@ -73,7 +74,7 @@ macro "Setup_project Action Tool - C059 T8c14S"
 	}
 }
 
-macro "Brush_Object Tool - Ce00 La077 Ld098 L6859 L4a2f L2f4f L3f99 L5e9b L9b98 L6888 L5e8d L888c"
+macro "Brush_Object Tool - icon:iWatershedSeg/objbrush.png"
 {
 	brushType = objLabel;
 	draw();
@@ -81,10 +82,10 @@ macro "Brush_Object Tool - Ce00 La077 Ld098 L6859 L4a2f L2f4f L3f99 L5e9b L9b98 
 
 macro "Brush_Object Tool Options"
 {
-	setBrushWidth();
+	parametersDialog();
 }
 
-macro "Brush_Background Tool - Ce00 La077 Ld098 L6859 L4a2f L2f4f L3f99 L5e9b L9b98 L6888 L5e8d L888c"
+macro "Brush_Background Tool - icon:iWatershedSeg/bgbrush.png"
 {
 	brushType = bgLabel;
 	draw();
@@ -92,10 +93,10 @@ macro "Brush_Background Tool - Ce00 La077 Ld098 L6859 L4a2f L2f4f L3f99 L5e9b L9
 
 macro "Brush_Background Tool Options"
 {
-	setBrushWidth();
+	parametersDialog();
 }
 
-macro "Eraser Tool - Ce00 La077 Ld098 L6859 L4a2f L2f4f L3f99 L5e9b L9b98 L6888 L5e8d L888c"
+macro "Eraser Tool - icon:iWatershedSeg/eraser.png"
 {
 	brushType = 0;
 	draw();
@@ -103,46 +104,30 @@ macro "Eraser Tool - Ce00 La077 Ld098 L6859 L4a2f L2f4f L3f99 L5e9b L9b98 L6888 
 
 macro "Eraser Tool Options"
 {
-	setBrushWidth();
+	parametersDialog();
 }
 
-macro "Segment Action Tool - C059 T8c14S"
+macro "Segment Action Tool - icon:iWatershedSeg/segment.png"
 {
 	segment();
 }
 
-macro "Register_object Action Tool - C059 T8c14R"
+macro "Register_object Action Tool - icon:iWatershedSeg/register.png"
 {
 	registerCurrentObject();
 }
 
-macro "Previous_frame Action Tool - C059 T8c14<"
+macro "Previous_frame Action Tool - icon:iWatershedSeg/backward.png"
 {
-	setBatchMode(true);
-	if (currentFrame >= 1)
-	{
-		currentFrame--;
-		setCurrentFrame(image);
-		setCurrentFrame(labels);
-		updateOverlay();
-	}
-	setBatchMode("exit and display");
+	nextFrame();
 }
 
-macro "Next_frame Action Tool - C059 T8c14>"
+macro "Next_frame Action Tool - icon:iWatershedSeg/forward.png"
 {
-	setBatchMode(true);
-	if (currentFrame <= nFrames)
-	{
-		currentFrame++;
-		setCurrentFrame(image);
-		setCurrentFrame(labels);
-		updateOverlay();
-	}
-	setBatchMode("exit and display");
+	nextFrame();
 }
 
-macro "More Action Tool - C059 T8c14M"
+macro "More Action Tool - icon:iWatershedSeg/more.png"
 {
 	more = newArray("Project parameters", "Reset current object segmentation", 
 	"Remove a registered object", "Jump to frame", "Save current project");
@@ -182,11 +167,31 @@ var adjustBC = true;
 var lut = "iWatershedSeg-black-red-green";
 var invertContourMap = false;
 */
-function setBrushWidth()
+function parametersDialog()
 {
-	Dialog.create("Brush width");
-	Dialog.addSlider("Brush width:", 1, 100, brushWidth);
+/*	dir = getDir("luts");
+
+	print(dir);
+	
+	luts = getFileList(dir);
+	
+	for (i = 0; i < luts.length; i++)
+	{
+		if (startsWith(luts[i], "iWatershedSeg"))
+		{
+			print(luts[i]);
+		}
+	}*/
+	Dialog.create("Parameters");
+	Dialog.addSlider("Brush width:", 1, 200, brushWidth);
+	Dialog.addSlider("Overlay opacity:", 0, 100, opacity);
+	Dialog.addCheckbox("adjust brightness-contrast before overlaying", adjustBC);
+	Dialog.addCheckbox("invert contour map", invertContourMap);
 	Dialog.show();
+	brushWidth = Dialog.getNumber();
+	opacity = Dialog.getNumber();
+	adjustBC = Dialog.getCheckbox();
+	invertContourMap = Dialog.getCheckbox();
 }
 
 function updateOverlay()
@@ -216,6 +221,32 @@ function setCurrentFrame(img)
 {
 	selectImage(img);
 	if (nFrames > 1) Stack.setFrame(currentFrame);
+}
+
+function previousFrame()
+{
+	setBatchMode(true);
+	if (currentFrame >= 1)
+	{
+		currentFrame--;
+		setCurrentFrame(image);
+		setCurrentFrame(labels);
+		updateOverlay();
+	}
+	setBatchMode("exit and display");
+}
+
+function nextFrame()
+{
+	setBatchMode(true);
+	if (currentFrame <= nFrames)
+	{
+		currentFrame++;
+		setCurrentFrame(image);
+		setCurrentFrame(labels);
+		updateOverlay();
+	}
+	setBatchMode("exit and display");
 }
 
 function getImageList()
@@ -253,13 +284,15 @@ function draw()
     getCursorLoc(x, y, z, flags);
     setLineWidth(brushWidth);
     moveTo(x,y);
-    x2 = -1; y2 = -1;
+    x2 = -1;
+    y2 = -1;
     while (true)
     {
         getCursorLoc(x, y, z, flags);
         if (flags & leftClick == 0) exit();
         if (x != x2 || y != y2) lineTo(x, y);
-        x2 = x; y2 = y;
+        x2 = x;
+        y2 = y;
         wait(10);
     }
 }
