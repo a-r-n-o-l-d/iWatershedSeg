@@ -1,5 +1,10 @@
 # iWatershedSeg
 
+This repository cantains a Fiji/ImageJ macro toolset, that provides an 
+interactive marker controlled watershed segmentation. This toolset uses icons 
+comming from GIMP software, therefore icons are provided with the GIMP license 
+(see \icons\iWatershedSeg\LICENSE).
+
 ## Install
 1. install `MorphoLibJ` in Fiji/Imagej
 2. copy `iWatershedSeg.ijm` and `icons` folder in `Fiji.app/macros/toolset` 
@@ -40,11 +45,11 @@ With the red brush tool mark the inside of your object, with the green brush
 tool mark the outside.
 ![screenshot 3](assets/Screenshot_3.png)
 
-### Run the wtershed algorithm
+### Run the watershed algorithm
 ![screenshot 4](assets/Screenshot_4.png)
 
 ### Record the labelling
-If you are happy withe result, you can register your object, otherwise you can 
+If you are happy with the result, you can register your object, otherwise you can 
 adjust markers with the brushes and the eraser, and re-run the watershed 
 algorithm.
 ![screenshot 5](assets/Screenshot_5.png)
