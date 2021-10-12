@@ -70,7 +70,7 @@ macro "Setup_project Action Tool - icon:iWatershedSeg/new.png"
 	}
 	else // loadProjectDialog 
 	{
-		exit("not yet supported");
+		loadProject();
 	}
 }
 
@@ -119,7 +119,7 @@ macro "Register_object Action Tool - icon:iWatershedSeg/register.png"
 
 macro "Previous_frame Action Tool - icon:iWatershedSeg/backward.png"
 {
-	nextFrame();
+	previousFrame();
 }
 
 macro "Next_frame Action Tool - icon:iWatershedSeg/forward.png"
@@ -136,7 +136,31 @@ macro "More Action Tool - icon:iWatershedSeg/more.png"
 	Dialog.addChoice("", more, more[0]);
 	Dialog.show();
 
-	//parametersDialog();
+	c = Dialog.getChoice();
+
+	if(c == more[0])
+	{
+		parametersDialog();
+	}
+	if(c == more[1])
+	{
+		resetCurrentLabel();
+	}
+	if(c == more[2])
+	{
+		exit("Not yet implemented");
+	}
+	if (c == more[3])
+	{
+		exit("Not yet implemented");
+		//currentFrame = ;
+		//setCurrentFrame(image);
+		//setCurrentFrame(labels);
+	}
+	if (c == more[4])
+	{
+		saveProject();
+	}
 }
 
 function resetCurrentLabel()
@@ -192,7 +216,7 @@ function parametersDialog()
 	Dialog.show();
 	brushWidth = Dialog.getNumber();
 	opacity = Dialog.getNumber();
-	adjustBC = Dialog.getCheckbox();
+	adjustBC = Dialog.getCheckbox(); // mettre à jour l'overlay
 	invertContourMap = Dialog.getCheckbox();
 }
 
@@ -363,4 +387,154 @@ function registerCurrentObject()
 	{
 		exit("Maximum number of objects is reached.");
 	}
+}
+
+/*
+ * // Parameters
+var brushWidth = 10;
+var opacity = 40;
+var adjustBC = true;
+var lut = "iWatershedSeg-black-red-green";
+var invertContourMap = false;
+
+// Global variables for current project
+var image = 0;
+var contourMap = 0;
+var labels = 0;
+var objectCount = 0;
+var currentFrame = 1;
+var nFrames = 1;
+var brushType = objLabel;
+ */
+function saveProject()
+{
+	path = getDir("Choose a Directory");
+	
+	selectImage(image);
+	p = getImagePath();
+	if (p == "")
+	{
+		p = path + "image.tif";
+		saveAs("Tiff", p);
+	}
+	proj = "image=" + p + "\n";
+
+	if (contourMap == image)
+	{
+		proj += "contourMap=image\n";
+	}
+	else
+	{
+		selectImage(contourMap);
+		p = getImagePath();
+		if (p == "")
+		{
+			p = path + "contourMap.tif";
+			saveAs("Tiff", p);
+		}
+		proj += "contourMap=" + p + "\n";
+	}
+	
+	selectImage(labels);
+	p = getImagePath();
+	if (p == "")
+	{
+		p = path + "labels.tif";
+	}
+	saveAs("Tiff", p);
+	proj += "labels=" + p + "\n";
+	
+	proj += "currentFrame=" + currentFrame + "\n";
+	proj += "nFrames=" + nFrames + "\n";
+	proj += "brushType=" + brushType + "\n";
+	proj += "brushWidth=" + brushWidth + "\n";
+	proj += "adjustBC=" + adjustBC + "\n";
+	proj += "lut=" + lut + "\n";
+	proj += "invertContourMap=" + invertContourMap + "\n";
+
+	File.saveString(proj, path + "proj.txt");
+}
+
+function loadProject()
+{
+	path = getDir("Choose a Directory");
+	proj = File.openAsString(path + "proj.txt");
+	proj = split(proj, "\n");
+	flag = false;
+	for (i = 0; i < proj.length; i++)
+	{
+		par = split(proj[i], "=");
+		if (par[0] == "image")
+		{
+			open(par[1]);
+			image = getImageID();
+		}
+		else if (par[0] == "contourMap")
+		{
+			if (par[1] == "image")
+			{
+				flag = true;
+			}
+			else 
+			{
+				open(par[1]);
+				contourMap = getImageID();
+			}
+		}
+		else if (par[0] == "labels")
+		{
+			open(par[1]);
+			labels = getImageID();
+		}
+		else if (par[0] == "currentFrame")
+		{
+			currentFrame = 0 + par[1];
+		}
+		else if (par[0] == "nFrames")
+		{
+			nFrames = 0 + par[1];
+		}
+		else if (par[0] == "brushType")
+		{
+			brushType = 0 + par[1];
+		}
+		else if (par[0] == "brushWidth")
+		{
+			brushWidth = 0 + par[1];
+		}
+		else if (par[0] == "adjustBC")
+		{
+			adjustBC = 0 + par[1];
+		}
+		else if (par[0] == "lut")
+		{
+			lut = par[1];
+		}
+		else if (par[0] == "invertContourMap")
+		{
+			invertContourMap = 0 + par[1];
+		}
+	}
+	if (flag)
+	{
+		contourMap = image;
+	}
+}
+
+function getImagePath()
+{
+	info =  getImageInfo();
+	info = split(info, "\n");
+	for (i = 0; i < info.length; i++)
+	{
+		inf = split(info[i], ": ");
+		if (inf.length == 2)
+		{
+			if (inf[0] == "Path")
+			{
+				return inf[1];
+			}
+		}
+	}
+	return "";
 }
