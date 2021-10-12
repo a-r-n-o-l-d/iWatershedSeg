@@ -23,6 +23,7 @@ var labels = 0;
 var objectCount = 0;
 var currentFrame = 1;
 var nFrames = 1;
+var slices = 1;
 var brushType = objLabel;
 
 //macro "Unused Tool-1 - " {}
@@ -242,7 +243,24 @@ function updateOverlay()
 	setBatchMode(true);
 	setCurrentFrame(image);
 	name = getTitleByID(image);
-	resetMinAndMax();
+	setCurrentFrame(labels);
+	run("Remove Overlay");
+	for (i = 1; i <= slices; i++)
+	{
+		selectImage(image);
+		Stack.setPosition(1, i, currentFrame);
+		resetMinAndMax();
+		if (adjustBC) run("Enhance Contrast", "saturated=0.35");
+		selectImage(labels);
+		for (j = 1; j < 4; j++)
+		{
+			Stack.setPosition(j, i, currentFrame);
+			//run("Remove Overlay");
+			run("Add Image...", "image=&name x=0 y=0 opacity=&opacity");
+		}
+	}
+
+	/*resetMinAndMax();
 	if (adjustBC) run("Enhance Contrast", "saturated=0.35");
 	setCurrentFrame(labels);
 	run("Remove Overlay");
@@ -251,7 +269,7 @@ function updateOverlay()
 		Stack.setChannel(i);
 		run("Add Image...", "image=&name x=0 y=0 opacity=&opacity");
 	}
-	setBatchMode("exit and display");
+	setBatchMode("exit and display");*/
 }
 
 function getTitleByID(id)
@@ -363,15 +381,29 @@ function segment()
 	// Watershed segmentation
 	selectImage(contourMap);
 	//run("Duplicate...", "duplicate frames=&currentFrame");
-	setCurrentFrame(contourMap);
-	run("Duplicate...", "use");
+	if (nFrames > 1)
+	{
+		setCurrentFrame(contourMap);
+		run("Duplicate...", "use");
+	}
+	else
+	{
+		run("Duplicate...", "duplicate");
+	}
 	cmap = getTitle();
 	if (invertContourMap) run("Invert", "stack");
 	run("Marker-controlled Watershed", "input=&cmap marker=&markers mask=None calculate use");
 	seg = getTitle();
-	selectImage(labels);
-	Stack.setChannel(2);
-	imageCalculator("Copy", labels, seg); // Ne gère pas la 3D
+	for (i = 1; i <= slices; i++)
+	{
+		selectImage(labels);
+		//Stack.setChannel(2);
+		Stack.setPosition(2, i, currentFrame);
+		selectImage(seg);
+		//Stack.setChannel(2);
+		Stack.setPosition(1, i, currentFrame);
+		imageCalculator("Copy", labels, seg);
+	}
 
 	close(markers);
 	close(cmap);
@@ -394,12 +426,23 @@ function registerCurrentObject()
 		setBatchMode(true);
 		objectCount++;
 		selectImage(labels);
+		for (i = 1; i <= slices; i++)
+		{
+			Stack.setPosition(2, i, currentFrame);
+			pixelSelection(objLabel);
+			Stack.setChannel(3);
+			run("Set...", "value=&objectCount slice");
+		}
+		resetCurrentLabel();
+		Stack.setChannel(3);
+		/*objectCount++;
+		selectImage(labels);
 		Stack.setChannel(2);
 		pixelSelection(objLabel);
 		Stack.setChannel(3);
 		run("Set...", "value=&objectCount slice"); // 3D pas gérée
 		resetCurrentLabel();
-		Stack.setChannel(3);
+		Stack.setChannel(3);*/
 		setBatchMode("exit and display");
 	}
 	else 
