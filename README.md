@@ -1,9 +1,9 @@
 # iWatershedSeg
 
-This repository cantains a Fiji/ImageJ macro toolset, that provides an 
+This repository contains a Fiji/ImageJ macro toolset, that provides an 
 interactive marker controlled watershed segmentation. This toolset uses icons 
 comming from GIMP software, therefore icons are provided with the GIMP license 
-(see /icons/iWatershedSeg/LICENSE).
+(see `/icons/iWatershedSeg/LICENSE`).
 
 ## Install
 1. install `MorphoLibJ` in Fiji/Imagej
@@ -27,7 +27,7 @@ directory
 9. extra tools like saving a project
 
 ### Start a project
-Click on the tool `1` and choose `start a new project`. If your data is a volume
+Click on the `tool 1` and choose `start a new project`. If your data is a volume
 or a time series, you must verify that your data have the appropriate dimension 
 in Z (.e. `slices`) or time (i.e. `nFrames`). The easiest way to do that, is to
 use `Image > Hypertstack > Hyperstack to stack` tool. And if needed use 
@@ -41,11 +41,12 @@ Threrefore, we use the input image as contour map.
 ![screenshot 2](assets/Screenshot_2.png)
 
 ### Creation of markers
-With the red brush tool mark the inside of your object, with the green brush 
-tool mark the outside.
+With the red brush tool (`tool 2`) mark the inside of your object, with the 
+green brush tool  (`tool 3`) mark the outside.
 ![screenshot 3](assets/Screenshot_3.png)
 
 ### Run the watershed algorithm
+Run the segmntation process with  `tool 5`.
 ![screenshot 4](assets/Screenshot_4.png)
 
 ### Record the labelling
@@ -55,5 +56,5 @@ algorithm.
 ![screenshot 5](assets/Screenshot_5.png)
 
 ### Save the current segmentation process
-In the extral tools menu choose `Save current project`.
+In the extral tools menu  (`tool 9`) choose `Save current project`.
 ![screenshot 6](assets/Screenshot_6.png)
