@@ -51,6 +51,22 @@ macro "Setup_project Action Tool - icon:iWatershedSeg/new.png"
 		selectWindow(img1);
 		image = getImageID();
 		Stack.getDimensions(width, height, channels, slices, nFrames);
+		if (slices > 1 && nFrames == 1)
+		{
+			if(getBoolean("Is stack a time series?"))
+			{
+				run("Stack to Hyperstack...", "order=xyczt(default) channels=1 slices=1 frames=&slices display=Color");
+			}
+		}
+		if (slices == 1 && nFrames > 1)
+		{
+			if(getBoolean("Is stack a volume?"))
+			{
+				run("Stack to Hyperstack...", "order=xyczt(default) channels=1 slices=&nFrames frames=1 display=Color");
+			}
+		}
+		Stack.getDimensions(width, height, channels, slices, nFrames);
+		//
 		//print(width, height, channels, slices, nFrames);
 		Stack.getPosition(channel, slice, currentFrame);
 		// check if channels == 1 sinon erreur
@@ -216,7 +232,8 @@ function parametersDialog()
 	Dialog.show();
 	brushWidth = Dialog.getNumber();
 	opacity = Dialog.getNumber();
-	adjustBC = Dialog.getCheckbox(); // mettre à jour l'overlay
+	adjustBC = Dialog.getCheckbox();
+	updateOverlay();
 	invertContourMap = Dialog.getCheckbox();
 }
 
@@ -345,7 +362,9 @@ function segment()
 
 	// Watershed segmentation
 	selectImage(contourMap);
-	run("Duplicate...", "duplicate frames=&currentFrame");
+	//run("Duplicate...", "duplicate frames=&currentFrame");
+	setCurrentFrame(contourMap);
+	run("Duplicate...", "use");
 	cmap = getTitle();
 	if (invertContourMap) run("Invert", "stack");
 	run("Marker-controlled Watershed", "input=&cmap marker=&markers mask=None calculate use");
