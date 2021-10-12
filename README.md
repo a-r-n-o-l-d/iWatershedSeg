@@ -3,7 +3,7 @@
 This repository cantains a Fiji/ImageJ macro toolset, that provides an 
 interactive marker controlled watershed segmentation. This toolset uses icons 
 comming from GIMP software, therefore icons are provided with the GIMP license 
-(see \icons\iWatershedSeg\LICENSE).
+(see /icons/iWatershedSeg/LICENSE).
 
 ## Install
 1. install `MorphoLibJ` in Fiji/Imagej
